@@ -10,7 +10,7 @@
 	"DocsURL": "https://inventory-docs.danielthedeveloper.net/",
 	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/791b4eefe33b4f939cd30b122a395292",
 	"SupportURL": "",
-	"EngineVersion": "5.5.0",
+	"EngineVersion": "5.4.0",
 	"CanContainContent": false,
 	"Installed": true,
 	"Modules": [
