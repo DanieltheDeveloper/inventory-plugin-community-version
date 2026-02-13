@@ -49,7 +49,7 @@ void UItemEquipmentTypeDataAsset::PreSave(FObjectPreSaveContext ObjectSaveContex
 		Super::PreSave(ObjectSaveContext);
 		return;
 	}
-
+	
 	Delegate = UPackage::PackageSavedWithContextEvent.AddLambda([this](const FString& InString, const UPackage* InPackage, const FObjectPostSaveContext& InContext)
 	{
 		if (IsRunningCommandlet())

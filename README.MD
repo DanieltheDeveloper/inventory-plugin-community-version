@@ -1,11 +1,11 @@
-# Inventory System Plugin — Unreal Engine 5.5
+# Inventory System Plugin — Unreal Engine 5.2
 
-A production-ready, multiplayer-compatible inventory and equipment plugin for Unreal Engine 5.5, written in C++ with full Blueprint support.
+A production-ready, multiplayer-compatible inventory and equipment plugin for Unreal Engine 5.2, written in C++ with full Blueprint support.
 
 Originally created by **Daniel Münch (Daniel the Developer)**. This is the community-maintained version.
 
 - **Version:** 3.0.2
-- **Engine:** Unreal Engine 5.5+
+- **Engine:** Unreal Engine 5.2
 - **License:** [MIT](LICENSE)
 - **Documentation:** [inventory-docs.danielthedeveloper.net](https://inventory-docs.danielthedeveloper.net/)
 

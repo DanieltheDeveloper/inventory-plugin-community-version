@@ -323,10 +323,10 @@ bool UInventorySystemComponent::InternalChecks(const bool bIsSavePackageEvent)
 	bool InternalPreventExecution = Super::InternalChecks(bIsSavePackageEvent);
 
 	AddToRoot();
-	UAssetManager* Manager = UAssetManager::GetIfInitialized();
+	UAssetManager& Manager = UAssetManager::Get();
 	const FName AssetRegistrySearchablePropertyName = GET_MEMBER_NAME_CHECKED(UItemDataAsset, bCanStack);
 
-	if (!Manager->IsInitialized())
+	if (!Manager.IsValid())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][InternalChecks]: AssetManager is not initialized"), *GetFName().ToString());
 		RemoveFromRoot();
@@ -635,14 +635,14 @@ bool UInventorySystemComponent::InternalChecks(const bool bIsSavePackageEvent)
 		FAssetData AssetData;
 		if (EquipmentAssets.IsValidIndex(I))
 		{
-			Manager->GetPrimaryAssetData(EquipmentAssets[I], AssetData);
+			Manager.GetPrimaryAssetData(EquipmentAssets[I], AssetData);
 		}
 
 		if (AssetData.IsValid())
 		{
 			if (bool TempCanStack = false; AssetData.GetTagValue(AssetRegistrySearchablePropertyName, TempCanStack))
 			{
-				Manager->UnloadPrimaryAsset(EquipmentAssets[I]);
+				Manager.UnloadPrimaryAsset(EquipmentAssets[I]);
 
 				if (!TempCanStack && EquipmentAmounts[I] > 1)
 				{
@@ -868,10 +868,10 @@ TArray<FEquipmentSlot> UInventorySystemComponent::GetEquipmentSlots() const
 
 FEquipmentSlot UInventorySystemComponent::GetEquipmentSlot(const int Slot) const
 {
-	UAssetManager* Manager = UAssetManager::GetIfInitialized();
+	UAssetManager& Manager = UAssetManager::Get();
 	const FName AssetRegistrySearchableEquipmentTypePropertyName = GET_MEMBER_NAME_CHECKED(UItemEquipmentDataAsset, EquipmentType);
 
-	if (!Manager->IsInitialized())
+	if (!Manager.IsValid())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][GetEquipmentSlot]: AssetManager is not initialized"), *GetFName().ToString());
 		return FEquipmentSlot{};
@@ -900,7 +900,7 @@ FEquipmentSlot UInventorySystemComponent::GetEquipmentSlot(const int Slot) const
 			}
 
 			FAssetData CurrentItemData;
-			Manager->GetPrimaryAssetData(EquipmentAssets[RealEquipmentIndex], CurrentItemData);
+			Manager.GetPrimaryAssetData(EquipmentAssets[RealEquipmentIndex], CurrentItemData);
 		
 			FAssetDataTagMapSharedView::FFindTagResult EquipmentTypesTagValue = CurrentItemData.TagsAndValues.FindTag(AssetRegistrySearchableEquipmentTypePropertyName);
 
@@ -1035,7 +1035,8 @@ bool UInventorySystemComponent::HasItemProperty(const int Slot, const FName Name
 
 	if (const int EquipmentDynamicStatsIndex = EquipmentDynamicStatsIndices.Find(Slot); EquipmentDynamicStatsIndex != INDEX_NONE && EquipmentDynamicStats.IsValidIndex(EquipmentDynamicStatsIndex))
 	{
-		for (const TArray<FItemProperty>* DynamicStatsItemProperties = &EquipmentDynamicStats[EquipmentDynamicStatsIndex].ItemProperties; const FItemProperty& ItemProperty : *DynamicStatsItemProperties)
+		const TArray<FItemProperty>* DynamicStatsItemProperties = &EquipmentDynamicStats[EquipmentDynamicStatsIndex].ItemProperties;
+		for (const FItemProperty& ItemProperty : *DynamicStatsItemProperties)
 		{
 			if (ItemProperty.Name == Name)
 			{
@@ -1065,7 +1066,8 @@ FItemProperty UInventorySystemComponent::GetItemProperty(const int Slot, const F
 
 	if (const int EquipmentDynamicStatsIndex = EquipmentDynamicStatsIndices.Find(Slot); EquipmentDynamicStatsIndex != INDEX_NONE && EquipmentDynamicStats.IsValidIndex(EquipmentDynamicStatsIndex))
 	{
-		for (const TArray<FItemProperty>* DynamicStatsItemProperties = &EquipmentDynamicStats[EquipmentDynamicStatsIndex].ItemProperties; const FItemProperty& ItemProperty : *DynamicStatsItemProperties)
+		const TArray<FItemProperty>* DynamicStatsItemProperties = &EquipmentDynamicStats[EquipmentDynamicStatsIndex].ItemProperties;
+		for (const FItemProperty& ItemProperty : *DynamicStatsItemProperties)
 		{
 			if (ItemProperty.Name == Name)
 			{
@@ -1107,8 +1109,8 @@ void UInventorySystemComponent::SetSlotAmount_Implementation(const int Slot, con
 	if (const int AmountIndex = EquipmentIndices.Find(Slot); AmountIndex != INDEX_NONE && EquipmentAssets.IsValidIndex(AmountIndex) && Amount > 0 && Amount <= GetEquipmentStackSizeConfig())
 	{
 		bool TempCanStack = false;
-		const UAssetManager* Manager = UAssetManager::GetIfInitialized();
-		if (!Manager->IsInitialized())
+		UAssetManager& Manager = UAssetManager::Get();
+		if (!Manager.IsValid())
 		{
 			UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][SetSlotAmount]: AssetManager is not initialized. Unable to set TempCanStack value"), *GetFName().ToString());
 			SetSlotAmountSuccessDelegate.Broadcast(false, Slot, bIsEquipment);
@@ -1117,7 +1119,7 @@ void UInventorySystemComponent::SetSlotAmount_Implementation(const int Slot, con
 		}
 
 		FAssetData AssetData;
-		Manager->GetPrimaryAssetData(EquipmentAssets[AmountIndex], AssetData);
+		Manager.GetPrimaryAssetData(EquipmentAssets[AmountIndex], AssetData);
 		if (!AssetData.IsValid())
 		{
 			UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][SetSlotAmount]: AssetData is not valid. Unable to set TempCanStack value"), *GetFName().ToString());
@@ -1279,8 +1281,8 @@ void UInventorySystemComponent::SwapItems_Implementation(const int First, const 
 	const int FirstIndex = EquipmentIndices.Find(First);
 	const int SecondIndex = EquipmentIndices.Find(Second);
 
-	const UAssetManager* Manager = UAssetManager::GetIfInitialized();
-	if ((FirstIndex == INDEX_NONE && SecondIndex == INDEX_NONE) || !Manager->IsInitialized() || !EquipmentTypeIndices.Contains(First) || !EquipmentTypeIndices.Contains(Second))
+	UAssetManager& Manager = UAssetManager::Get();
+	if ((FirstIndex == INDEX_NONE && SecondIndex == INDEX_NONE) || !Manager.IsValid() || !EquipmentTypeIndices.Contains(First) || !EquipmentTypeIndices.Contains(Second))
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][SwapItems]: AssetManager is not initialized or item data is invalid"), *GetFName().ToString());
 		SwapItemSuccessDelegate.Broadcast(false, First, Second, bIsEquipment);
@@ -1339,8 +1341,8 @@ void UInventorySystemComponent::SwapItems_Implementation(const int First, const 
 
 		FAssetData FirstAssetData;
 		FAssetData SecondAssetData;
-		Manager->GetPrimaryAssetData(EquipmentAssets[FirstIndex], FirstAssetData);
-		Manager->GetPrimaryAssetData(EquipmentAssets[SecondIndex], SecondAssetData);
+		Manager.GetPrimaryAssetData(EquipmentAssets[FirstIndex], FirstAssetData);
+		Manager.GetPrimaryAssetData(EquipmentAssets[SecondIndex], SecondAssetData);
 
 		if (!FirstAssetData.IsValid() || !SecondAssetData.IsValid())
 		{
@@ -1483,7 +1485,7 @@ void UInventorySystemComponent::SwapItems_Implementation(const int First, const 
 	if (FirstIndex != INDEX_NONE)
 	{
 		FAssetData FirstAssetData;
-		Manager->GetPrimaryAssetData(EquipmentAssets[FirstIndex], FirstAssetData);
+		Manager.GetPrimaryAssetData(EquipmentAssets[FirstIndex], FirstAssetData);
 		if (!FirstAssetData.IsValid())
 		{
 			UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][SwapItems]: AssetData is not valid. Unable to set TempCanStack value"), *GetFName().ToString());
@@ -1541,7 +1543,7 @@ void UInventorySystemComponent::SwapItems_Implementation(const int First, const 
 	if (SecondIndex != INDEX_NONE)
 	{
 		FAssetData SecondAssetData;
-		Manager->GetPrimaryAssetData(EquipmentAssets[SecondIndex], SecondAssetData);
+		Manager.GetPrimaryAssetData(EquipmentAssets[SecondIndex], SecondAssetData);
 		if (!SecondAssetData.IsValid())
 		{
 			UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][SwapItems]: AssetData is not valid. Unable to set TempCanStack value"), *GetFName().ToString());
@@ -1667,15 +1669,15 @@ bool UInventorySystemComponent::PickUpItemDropInternal(AItemDrop* const& Item, c
 	}
 
 	bool TempCanStack = false;
-	const UAssetManager* Manager = UAssetManager::GetIfInitialized();
-	if (!Manager->IsInitialized())
+	UAssetManager& Manager = UAssetManager::Get();
+	if (!Manager.IsValid())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][PickUpItemDrop]: AssetManager is not initialized. Unable to set TempCanStack value"), *GetFName().ToString());
 		return false;
 	}
 
 	FAssetData AssetData;
-	Manager->GetPrimaryAssetData(Item->InventoryAsset, AssetData);
+	Manager.GetPrimaryAssetData(Item->InventoryAsset, AssetData);
 	if (!AssetData.IsValid())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][PickUpItemDrop]: AssetData is not valid. Unable to set TempCanStack value"), *GetFName().ToString());
@@ -1779,8 +1781,8 @@ void UInventorySystemComponent::AddItemToEquipmentSlot_Implementation(const FPri
 
 	bool TempCanStack = false;
 	TArray<FPrimaryAssetId> AssetEquipmentType{};
-	const UAssetManager* Manager = UAssetManager::GetIfInitialized();
-	if (!Manager->IsInitialized())
+	UAssetManager& Manager = UAssetManager::Get();
+	if (!Manager.IsValid())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][AddItemToEquipmentSlot]: AssetManager is not initialized. Unable to set TempCanStack value"), *GetFName().ToString());
 		AddItemToEquipmentSlotFailureDelegate.Broadcast(InventoryAsset, EquipmentSlot, DynamicStats, Amount);
@@ -1789,7 +1791,7 @@ void UInventorySystemComponent::AddItemToEquipmentSlot_Implementation(const FPri
 	}
 
 	FAssetData AssetData;
-	Manager->GetPrimaryAssetData(InventoryAsset, AssetData);
+	Manager.GetPrimaryAssetData(InventoryAsset, AssetData);
 	if (!AssetData.IsValid())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][AddItemToEquipmentSlot]: AssetData is not valid. Unable to set TempCanStack value"), *GetFName().ToString());
@@ -1885,7 +1887,7 @@ void UInventorySystemComponent::AddItemToEquipmentSlot_Implementation(const FPri
 		if (bCanUnequippedItemStack)
 		{
 			FAssetData EquippedAssetData;
-			Manager->GetPrimaryAssetData(EquipmentAssets[RealEquipmentIndex], EquippedAssetData);
+			Manager.GetPrimaryAssetData(EquipmentAssets[RealEquipmentIndex], EquippedAssetData);
 			if (!EquippedAssetData.IsValid())
 			{
 				UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][AddItemToEquipmentSlot]: EquippedAssetData is not valid. Unable to set EquippedTempCanStack value"), *GetFName().ToString());
@@ -2077,10 +2079,10 @@ bool UInventorySystemComponent::RemoveEquipmentAmountFromSlot_Validate(const int
 
 void UInventorySystemComponent::RemoveEquipmentAmountFromSlot_Implementation(const int EquipmentSlot, const int Amount)
 {
-	UAssetManager* Manager = UAssetManager::GetIfInitialized();
+	UAssetManager& Manager = UAssetManager::Get();
 	const FName AssetRegistrySearchableEquipmentTypePropertyName = GET_MEMBER_NAME_CHECKED(UItemEquipmentDataAsset, EquipmentType);
 
-	if (!Manager->IsInitialized())
+	if (!Manager.IsValid())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][RemoveEquipmentAmountFromSlot]: AssetManager is not initialized"), *GetFName().ToString());
 		return;
@@ -2142,7 +2144,7 @@ void UInventorySystemComponent::RemoveEquipmentAmountFromSlot_Implementation(con
 	}
 
 	FAssetData CurrentItemData;
-	Manager->GetPrimaryAssetData(EquipmentAssets[RealEquipmentIndex], CurrentItemData);
+	Manager.GetPrimaryAssetData(EquipmentAssets[RealEquipmentIndex], CurrentItemData);
 
 	FAssetDataTagMapSharedView::FFindTagResult EquipmentTypesTagValue = CurrentItemData.TagsAndValues.FindTag(AssetRegistrySearchableEquipmentTypePropertyName);
 
@@ -2190,8 +2192,8 @@ bool UInventorySystemComponent::ItemEquipFromInventory_Validate(const int Slot, 
 
 void UInventorySystemComponent::ItemEquipFromInventory_Implementation(const int Slot, const int EquipmentSlot, const bool bCanUnequippedItemStack, const bool bCanStack)
 {
-	UAssetManager* Manager = UAssetManager::GetIfInitialized();
-	if (!Manager->IsInitialized())
+	UAssetManager& Manager = UAssetManager::Get();
+	if (!Manager.IsValid())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][ItemEquipFromInventory]: AssetManager is not initialized"), *GetFName().ToString());
 		ItemEquipFromInventorySuccessDelegate.Broadcast(false, EquipmentSlot, Slot);
@@ -2227,7 +2229,7 @@ void UInventorySystemComponent::ItemEquipFromInventory_Implementation(const int 
 	bool TempCanStack = false;
 	TArray<FPrimaryAssetId> AssetEquipmentType{};
 	FAssetData AssetData;
-	Manager->GetPrimaryAssetData(InventoryAssets[RealIndex], AssetData);
+	Manager.GetPrimaryAssetData(InventoryAssets[RealIndex], AssetData);
 	if (!AssetData.IsValid())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][ItemEquipFromInventory]: AssetData is not valid. Unable to set TempCanStack value"), *GetFName().ToString());
@@ -2674,8 +2676,8 @@ void UInventorySystemComponent::ItemUnequip_Implementation(const int EquipmentSl
 TArray<int> UInventorySystemComponent::ItemUnequipInternal(const int& EquipmentSlot, const TArray<int> IgnoreInventorySlots, const bool bCanStack, const int SpecificInventorySlot)
 {
 	const int RealEquipmentIndex = EquipmentIndices.Find(EquipmentSlot);
-	const UAssetManager* Manager = UAssetManager::GetIfInitialized();
-	if (RealEquipmentIndex == INDEX_NONE || !Manager->IsInitialized() || !EquipmentTypeIndices.Contains(EquipmentSlot) || !EquipmentAssets.IsValidIndex(RealEquipmentIndex) || !EquipmentAmounts.IsValidIndex(RealEquipmentIndex))
+	UAssetManager& Manager = UAssetManager::Get();
+	if (RealEquipmentIndex == INDEX_NONE || !Manager.IsValid() || !EquipmentTypeIndices.Contains(EquipmentSlot) || !EquipmentAssets.IsValidIndex(RealEquipmentIndex) || !EquipmentAmounts.IsValidIndex(RealEquipmentIndex))
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][ItemUnequip]: Invalid item or EquipmentType data"), *GetFName().ToString());
 		return {};
@@ -2702,7 +2704,7 @@ TArray<int> UInventorySystemComponent::ItemUnequipInternal(const int& EquipmentS
 
 	bool TempCanStack = false;
 	FAssetData AssetData;
-	Manager->GetPrimaryAssetData(EquipmentAssets[RealEquipmentIndex], AssetData);
+	Manager.GetPrimaryAssetData(EquipmentAssets[RealEquipmentIndex], AssetData);
 	if (!AssetData.IsValid())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][ItemUnequip]: AssetData is not valid. Unable to set TempCanStack value"), *GetFName().ToString());

@@ -68,12 +68,12 @@ void FInventorySystemEditorModule::OnWorldInitialized(UWorld* World, const UWorl
 
 		if (World && World->WorldType == EWorldType::Editor)
 		{
-			if (UAssetManager* Manager = UAssetManager::GetIfInitialized(); Manager && Manager->HasInitialScanCompleted())
+			if (UAssetManager& Manager = UAssetManager::Get(); Manager.IsValid() && Manager.HasInitialScanCompleted())
 			{
 				for (TActorIterator<AItemDrop> It(World); It; ++It)
 				{
 					AItemDrop* Actor = *It;
-					Manager->LoadPrimaryAsset(Actor->InventoryAsset, TArray<FName>{}, FStreamableDelegate::CreateLambda([this, Actor, World]()
+					Manager.LoadPrimaryAsset(Actor->InventoryAsset, TArray<FName>{}, FStreamableDelegate::CreateLambda([this, Actor, World]()
 					{
 						Actor->RerunConstructionScripts();
 						bAsyncTaskShouldRun = false;

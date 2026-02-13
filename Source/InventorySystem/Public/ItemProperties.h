@@ -196,6 +196,18 @@ struct INVENTORYSYSTEM_API FItemProperties
 	}
 
 	/**
+	 * Compare two FItemProperties objects for equality.
+	 *
+	 * @param First The first FItemProperties to compare.
+	 * @param Other The second FItemProperties to compare.
+	 * @return True if FItemProperties objects are not equal, true otherwise.
+	 */
+	friend bool operator!=(const FItemProperties& First, const FItemProperties& Other)
+	{
+		return First.ItemProperties != Other.ItemProperties;
+	}
+
+	/**
 	 * Combine two sets of FItemProperties.
 	 *
 	 * @param Rhs The second set of FItemProperties.

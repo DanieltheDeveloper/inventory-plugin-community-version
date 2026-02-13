@@ -160,10 +160,10 @@ void AItemDrop::InternalChecks(const bool bPreventExecution, const bool bIsSaveP
 #endif
 
 	// Check and set InternalCanStack. This value is important for any checks related with amounts. This only applies to runtime
-	if (const UAssetManager* AssetManager = UAssetManager::GetIfInitialized(); AssetManager && AssetManager->IsInitialized())
+	if (UAssetManager& AssetManager = UAssetManager::Get(); AssetManager.IsValid())
 	{
 		FAssetData AssetData;
-		AssetManager->GetPrimaryAssetData(InventoryAsset,  AssetData);
+		AssetManager.GetPrimaryAssetData(InventoryAsset,  AssetData);
 		if (AssetData.IsValid())
 		{
 			const FName AssetRegistrySearchablePropertyName = GET_MEMBER_NAME_CHECKED(UItemDataAsset, bCanStack);

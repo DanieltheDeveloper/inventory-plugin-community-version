@@ -298,10 +298,10 @@ void UItemContainerComponent::PostEditChangeProperty(FPropertyChangedEvent& Prop
 bool UItemContainerComponent::InternalChecks(const bool bIsSavePackageEvent)
 {
 	AddToRoot();
-	UAssetManager* Manager = UAssetManager::GetIfInitialized();
+	UAssetManager& Manager = UAssetManager::Get();
 	const FName AssetRegistrySearchablePropertyName = GET_MEMBER_NAME_CHECKED(UItemDataAsset, bCanStack);
 
-	if (!Manager->IsInitialized())
+	if (!Manager.IsValid())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UItemContainerComponent|%s][InternalChecks]: AssetManager is not initialized"), *GetFName().ToString());
 		RemoveFromRoot();
@@ -458,14 +458,14 @@ bool UItemContainerComponent::InternalChecks(const bool bIsSavePackageEvent)
 		FAssetData AssetData;
 		if (InventoryAssets.IsValidIndex(I))
 		{
-			Manager->GetPrimaryAssetData(InventoryAssets[I], AssetData);
+			Manager.GetPrimaryAssetData(InventoryAssets[I], AssetData);
 		}
 
 		if (AssetData.IsValid())
 		{
 			if (bool TempCanStack = false; AssetData.GetTagValue(AssetRegistrySearchablePropertyName, TempCanStack))
 			{
-				Manager->UnloadPrimaryAsset(InventoryAssets[I]);
+				Manager.UnloadPrimaryAsset(InventoryAssets[I]);
 
 				if (!TempCanStack && InventoryAmounts[I] > 1)
 				{
@@ -713,7 +713,8 @@ bool UItemContainerComponent::HasItemProperty(const int Slot, const FName Name, 
 
 	if (const int InventoryDynamicStatsIndex = InventoryDynamicStatsIndices.Find(Slot); InventoryDynamicStatsIndex != INDEX_NONE && InventoryDynamicStats.IsValidIndex(InventoryDynamicStatsIndex))
 	{
-		for (const TArray<FItemProperty>* DynamicStatsItemProperties = &InventoryDynamicStats[InventoryDynamicStatsIndex].ItemProperties; const FItemProperty& ItemProperty : *DynamicStatsItemProperties)
+		const TArray<FItemProperty>* DynamicStatsItemProperties = &InventoryDynamicStats[InventoryDynamicStatsIndex].ItemProperties;
+		for (const FItemProperty& ItemProperty : *DynamicStatsItemProperties)
 		{
 			if (ItemProperty.Name == Name)
 			{
@@ -738,7 +739,8 @@ FItemProperty UItemContainerComponent::GetItemProperty(const int Slot, const FNa
 
 	if (const int InventoryDynamicStatsIndex = InventoryDynamicStatsIndices.Find(Slot); InventoryDynamicStatsIndex != INDEX_NONE && InventoryDynamicStats.IsValidIndex(InventoryDynamicStatsIndex))
 	{
-		for (const TArray<FItemProperty>* DynamicStatsItemProperties = &InventoryDynamicStats[InventoryDynamicStatsIndex].ItemProperties; const FItemProperty& ItemProperty : *DynamicStatsItemProperties)
+		const TArray<FItemProperty>* DynamicStatsItemProperties = &InventoryDynamicStats[InventoryDynamicStatsIndex].ItemProperties;
+		for (const FItemProperty& ItemProperty : *DynamicStatsItemProperties)
 		{
 			if (ItemProperty.Name == Name)
 			{
@@ -779,8 +781,8 @@ void UItemContainerComponent::SetSlotAmount_Implementation(const int Slot, const
 	if (const int AmountIndex = InventoryIndices.Find(Slot); AmountIndex != INDEX_NONE && InventoryAssets.IsValidIndex(AmountIndex) && Amount > 0 && Amount <= GetStackSizeConfig())
 	{
 		bool TempCanStack = false;
-		const UAssetManager* Manager = UAssetManager::GetIfInitialized();
-		if (!Manager->IsInitialized())
+		UAssetManager& Manager = UAssetManager::Get();
+		if (!Manager.IsValid())
 		{
 			UE_LOG(InventorySystem, Error, TEXT("[UItemContainerComponent|%s][SetSlotAmount]: AssetManager is not initialized. Unable to set TempCanStack value"), *GetFName().ToString());
 			SetSlotAmountSuccessDelegate.Broadcast(false, Slot, bIsEquipment);
@@ -789,7 +791,7 @@ void UItemContainerComponent::SetSlotAmount_Implementation(const int Slot, const
 		}
 
 		FAssetData AssetData;
-		Manager->GetPrimaryAssetData(InventoryAssets[AmountIndex], AssetData);
+		Manager.GetPrimaryAssetData(InventoryAssets[AmountIndex], AssetData);
 		if (!AssetData.IsValid())
 		{
 			UE_LOG(InventorySystem, Error, TEXT("[UItemContainerComponent|%s][SetSlotAmount]: AssetData is not valid. Unable to set TempCanStack value"), *GetFName().ToString());
@@ -935,15 +937,15 @@ void UItemContainerComponent::FindItemStack(const FPrimaryAssetId& InventoryAsse
 		}
 	}
 
-	const UAssetManager* Manager = UAssetManager::GetIfInitialized();
-	if (!Manager->IsInitialized() || !InventoryAsset.IsValid() || InventoryAsset == FPrimaryAssetId() || ItemAmount < INDEX_NONE || ItemAmount == 0)
+	UAssetManager& Manager = UAssetManager::Get();
+	if (!Manager.IsValid() || !InventoryAsset.IsValid() || InventoryAsset == FPrimaryAssetId() || ItemAmount < INDEX_NONE || ItemAmount == 0)
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UItemContainerComponent|%s][FindItemStack]: AssetManager is not initialized or item data is invalid"), *GetFName().ToString());
 		return;
 	}
 
 	FAssetData AssetData;
-	Manager->GetPrimaryAssetData(InventoryAsset, AssetData);
+	Manager.GetPrimaryAssetData(InventoryAsset, AssetData);
 
 	if (!AssetData.IsValid())
 	{
@@ -1199,15 +1201,15 @@ TArray<int> UItemContainerComponent::AddItemInternal(const FPrimaryAssetId& Inve
 	const TArray<FItemProperties> TempInventoryDynamicStats = InventoryDynamicStats;
 
 	bool TempCanStack = false;
-	const UAssetManager* Manager = UAssetManager::GetIfInitialized();
-	if (!Manager->IsInitialized())
+	UAssetManager& Manager = UAssetManager::Get();
+	if (!Manager.IsValid())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][AddItem]: AssetManager is not initialized. Unable to set TempCanStack value"), *GetFName().ToString());
 		return {};
 	}
 
 	FAssetData AssetData;
-	Manager->GetPrimaryAssetData(InventoryAsset, AssetData);
+	Manager.GetPrimaryAssetData(InventoryAsset, AssetData);
 	if (!AssetData.IsValid())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UInventorySystemComponent|%s][AddItem]: AssetData is not valid. Unable to set TempCanStack value"), *GetFName().ToString());
@@ -1376,8 +1378,8 @@ void UItemContainerComponent::AddItemToSlot_Implementation(const FPrimaryAssetId
 
 	bIsProcessing = true;
 
-	const UAssetManager* Manager = UAssetManager::GetIfInitialized();
-	if (Amount <= 0 || !Manager->IsInitialized() || !InventoryAsset.IsValid() || InventoryAsset == FPrimaryAssetId())
+	UAssetManager& Manager = UAssetManager::Get();
+	if (Amount <= 0 || !Manager.IsValid() || !InventoryAsset.IsValid() || InventoryAsset == FPrimaryAssetId())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UItemContainerComponent|%s][AddItemToSlot]: AssetManager is not initialized or item data is invalid"), *GetFName().ToString());
 		AddItemToSlotFailureDelegate.Broadcast(InventoryAsset, Slot, DynamicStats, Amount, bEnableFallback);
@@ -1386,7 +1388,7 @@ void UItemContainerComponent::AddItemToSlot_Implementation(const FPrimaryAssetId
 	}
 
 	FAssetData AssetData;
-	Manager->GetPrimaryAssetData(InventoryAsset, AssetData);
+	Manager.GetPrimaryAssetData(InventoryAsset, AssetData);
 
 	if (!AssetData.IsValid())
 	{
@@ -1629,8 +1631,8 @@ void UItemContainerComponent::SwapItems_Implementation(const int First, const in
 	const int FirstIndex = InventoryIndices.Find(First);
 	const int SecondIndex = InventoryIndices.Find(Second);
 
-	const UAssetManager* Manager = UAssetManager::GetIfInitialized();
-	if ((FirstIndex == INDEX_NONE && SecondIndex == INDEX_NONE) || !Manager->IsInitialized())
+	UAssetManager& Manager = UAssetManager::Get();
+	if ((FirstIndex == INDEX_NONE && SecondIndex == INDEX_NONE) || !Manager.IsValid())
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UItemContainerComponent|%s][SwapItems]: AssetManager is not initialized or item data is invalid"), *GetFName().ToString());
 		SwapItemSuccessDelegate.Broadcast(false, First, Second, bIsEquipment);
@@ -1666,8 +1668,8 @@ void UItemContainerComponent::SwapItems_Implementation(const int First, const in
 
 		FAssetData FirstAssetData;
 		FAssetData SecondAssetData;
-		Manager->GetPrimaryAssetData(InventoryAssets[FirstIndex], FirstAssetData);
-		Manager->GetPrimaryAssetData(InventoryAssets[SecondIndex], SecondAssetData);
+		Manager.GetPrimaryAssetData(InventoryAssets[FirstIndex], FirstAssetData);
+		Manager.GetPrimaryAssetData(InventoryAssets[SecondIndex], SecondAssetData);
 
 		if (!FirstAssetData.IsValid() || !SecondAssetData.IsValid())
 		{
@@ -2025,8 +2027,8 @@ void UItemContainerComponent::SwapItemWithComponent_Implementation(const int Fir
 
 	// Check if empty items are traded or we have an error
 	const int RealFirstInventoryIndex = InventoryIndices.Find(First);
-	const UAssetManager* Manager = UAssetManager::GetIfInitialized();
-	if (RealFirstInventoryIndex == INDEX_NONE || !Manager->IsInitialized() || !InventoryAssets.IsValidIndex(RealFirstInventoryIndex) || !InventoryAmounts.IsValidIndex(RealFirstInventoryIndex))
+	UAssetManager& Manager = UAssetManager::Get();
+	if (RealFirstInventoryIndex == INDEX_NONE || !Manager.IsValid() || !InventoryAssets.IsValidIndex(RealFirstInventoryIndex) || !InventoryAmounts.IsValidIndex(RealFirstInventoryIndex))
 	{
 		UE_LOG(InventorySystem, Error, TEXT("[UItemContainerComponent|%s][SwapItemWithComponent]: AssetManager is not initialized or item data is invalid for slot: %d"), *GetFName().ToString(), First);
 		SwapItemWithComponentSuccessDelegate.Broadcast(false, First, ItemContainerComponent);
@@ -2037,7 +2039,7 @@ void UItemContainerComponent::SwapItemWithComponent_Implementation(const int Fir
 	}
 
 	FAssetData FirstAssetData;
-	Manager->GetPrimaryAssetData(InventoryAssets[RealFirstInventoryIndex], FirstAssetData);
+	Manager.GetPrimaryAssetData(InventoryAssets[RealFirstInventoryIndex], FirstAssetData);
 
 	if (!FirstAssetData.IsValid())
 	{
