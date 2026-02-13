@@ -1,0 +1,36 @@
+{
+	"FileVersion": 3,
+	"Version": 22,
+	"VersionName": "3.0.2",
+	"FriendlyName": "Inventory System",
+	"Description": "Introduces new generic inventory related blueprint and networking ready UI, Component and DataAsset classes to create complex inventory systems",
+	"Category": "Inventory System",
+	"CreatedBy": "Daniel Muench",
+	"CreatedByURL": "",
+	"DocsURL": "https://inventory-docs.danielthedeveloper.net/",
+	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/791b4eefe33b4f939cd30b122a395292",
+	"SupportURL": "",
+	"EngineVersion": "5.5.0",
+	"CanContainContent": false,
+	"Installed": true,
+	"Modules": [
+		{
+			"Name": "InventorySystem",
+			"Type": "Runtime",
+			"LoadingPhase": "EarliestPossible",
+			"PlatformAllowList": [
+				"Win64",
+				"Linux"
+			]
+		},
+		{
+			"Name": "InventorySystemEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit",
+			"PlatformAllowList": [
+				"Win64",
+				"Linux"
+			]
+		}
+	]
+}
